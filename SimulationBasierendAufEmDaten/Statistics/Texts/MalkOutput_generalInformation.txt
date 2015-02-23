@@ -1,6 +1,0 @@
-Filename: MalkOutput
-Reconstruction date: 2015/02/03 17:18:12
-Number of localizations: 118331
-Number of incorrectly read lines: 0
-Line numbers:
-

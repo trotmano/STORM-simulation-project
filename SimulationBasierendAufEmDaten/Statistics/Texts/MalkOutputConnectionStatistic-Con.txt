@@ -1,2 +1,0 @@
-Number of localizations after connecting: 118331
-Number of localizations before connecting: 118331
