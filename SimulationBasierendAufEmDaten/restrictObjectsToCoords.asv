@@ -1,0 +1,12 @@
+function selectedObjects = restrictObjectsToCoords(objects,xmin,xmax,ymin,ymax,zmin,zmax)
+    selectedObjects = {};
+    for i = 1:size(objects)
+        if sum(objects(:,1)<xmin) > 0 || sum(objects(:,1)>xmax)>0 || sum(objects(:,2)<ymin) > 0 || sum(objects(:,2)>ymax)>0 || sum(objects(:,3)<zmin) > 0 || sum(objects(:,3)>zmax)>0)
+        else
+            
+        end
+        
+    end
+
+
+end

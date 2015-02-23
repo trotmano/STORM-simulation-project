@@ -1,0 +1,8 @@
+function setViewForFigures(figs,az,el)
+    for i = 1:size(figs,2)
+        figure(figs(i))
+        view([az,el])
+        axis equal
+        view
+    end
+end
