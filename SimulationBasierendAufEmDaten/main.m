@@ -36,31 +36,9 @@ function main()
     %objects = rescaleObjects(objects,2.3); %WICHTIG FÜR MITOCHONDRIEN
     %objects = importSelfMeassuredMicrotubuli();
    
-    listLoa = [1];%[9,10,11,12,13,14,15];
-    listRes = [[1;1],[4;8],[8;30]];
-    listPabs = [0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.15,0.2,0.25,0.5];
-    listAbpf = [1,2,5,10,14];
-    listFpab = [1,1.2,1.5,2,3];
-    for a = 1:size(listLoa,2)
-        for b = 1:size(listRes,2)
-            for c = 1:size(listPabs,2)
-                for d = 1:size(listAbpf,2)
-                    for e = 1:size(listFpab,2)
-                        sprintf('%d/%d, %d/%d, %d/%d, %d/%d, %d/%d',a,size(listLoa,2),b,size(listRes,2),c,size(listPabs,2),d,size(listAbpf,2),e,size(listFpab,2))
-                        loa = listLoa(a);
-                        sxy = listRes(1,b);
-                        sz = listRes(2,b);
-                        pabs = listPabs(c);
-                        abpf = listAbpf(d);
-                        fpab = listFpab(e);
-                        [ap,ep,stormPoints] = doSimulation(objects, bspsnm, pabs,loa,aoa,doc,nocpsmm,docpsnm,bspnm,rof,abpf,sxy,sz,bd,fpab);
-                        if (size(stormPoints,1)>0)
-                            writeOutput(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
-                        end
-                    end
-                end
-            end
-        end
+    [ap,ep,stormPoints] = doSimulation(objects, bspsnm, pabs,loa,aoa,doc,nocpsmm,docpsnm,bspnm,rof,abpf,sxy,sz,bd,fpab);
+    if (size(stormPoints,1)>0)
+        writeOutput(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
     end
     visualizeResults(objects,ap,ep,stormPoints)
 end
