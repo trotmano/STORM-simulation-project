@@ -5,9 +5,14 @@ function [basepoints,ep] = findAntibodiesTri(triangles, bspsnm, pabs, loa, aoa, 
     areas = getAreas(triang);
     %areas = getAreas(triangles);
     nbrFluorophores = floor(sum(real(areas))*bspsnm*pabs);
-    [basepoints,idx] = findBasePoints(ceil(nbrFluorophores * (1-doc)),triang, areas);
-    %[basepointsCluster] = findBasePointsCluster(ceil(nbrFluorophores*doc), triang, areas, nocpsmm, docpsnm);
-    ep = getEndpoints(basepoints,triang,idx,loa, aoa);
+    if nbrFluorophores == 0
+        basepoints = [];
+        ep = [];
+    else
+        [basepoints,idx] = findBasePoints(ceil(nbrFluorophores * (1-doc)),triang, areas);
+        %[basepointsCluster] = findBasePointsCluster(ceil(nbrFluorophores*doc), triang, areas, nocpsmm, docpsnm);
+        ep = getEndpoints(basepoints,triang,idx,loa, aoa);
+    end
 end
 
 function ep = getEndpoints(basepoints, triang,idx,loa, aoa)
@@ -67,21 +72,15 @@ function [points,idx] = findBasePoints(nbrFluorophores,triang,areas)
     points = zeros(nbrFluorophores,3);
     v1 = squeeze(triang(:,2,:) - triang(:,1,:));
     v2 = squeeze(triang(:,3,:) - triang(:,1,:));
-    start = tic;
-    %idx = getRandomTriangles2(areas, nbrFluorophores);
-    toc(start)
-    start = tic;
     idx = getRandomTriangles(areas, nbrFluorophores);
-    toc(start)
+
 %    idx = randi(size(triang,1),nbrFluorophores,1);
     for i = 1:nbrFluorophores
         while 1==1
             randx = rand(1);
             randy = rand(1);
             p = squeeze(triang(idx(i),1,:))+randx*v1(idx(i),:)'+randy*v2(idx(i),:)';
-            A = [squeeze(triang(idx(i),1,:))';v1(idx(i),:);v2(idx(i),:)];
-            x = linsolve(A',p);
-            if x(2)<0||x(2)>1 ||x(3) <0||x(3)>1||x(2)+x(3)>1
+            if (randx + randy)<1
 %                 figure
 %                 plot3(triang(idx(i),:,1),triang(idx(i),:,2),triang(idx(i),:,3))
 %                 hold on

@@ -9,10 +9,10 @@ fid = fopen(fname);
 
 delimiter = ' ';
 tline = fgets(fid);
-counter = 0;
 points = {};
 tmp = [];
 tmpPunktScatter = [];
+counter = 0;
 while ischar(tline)
     if size(tline,2)>=3 && ~isempty(findstr(tline(1:3), 'p 3'))
         tmp = [];

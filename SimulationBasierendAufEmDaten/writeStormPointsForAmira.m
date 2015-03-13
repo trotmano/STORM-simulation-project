@@ -1,6 +1,6 @@
-function writeStormPointsForAmira(stormPoints,fname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm)
+function writeStormPointsForAmira(stormPoints,fname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab)
     parts = strsplit(fname,'.'); 
-    params = sprintf('loa-%3.3faoa-%3.3fbspnm-%3.3fpabs-%3.3fabpf-%3.3frof-%3.3fsxy-%3.3fsz-%3.3fbspsnm%3.3f',loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm);
+    params = sprintf('loa%2.2faoa%2.2fbspnm%2.2fpabs%2.2fabpf%2.2frof%2.2fsxy%2.2fsz%2.2fbspsnm%2.2ffpab%2.2f',loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
     outputFname = [parts{1},params,'_AmiraOutput.txt'];
     
     fid = fopen(outputFname,'w+t');
@@ -21,7 +21,7 @@ function writeStormPointsForAmira(stormPoints,fname,loa,aoa,bspnm,pabs,abpf,rof,
     fprintf(fid,'0.00 0.00 1.00\n');
     fprintf(fid,'\n');
     fclose(fid);
-    stormPoints = [stormPoints,zeros(size(stormPoints,1),1)];
+    %stormPoints = [stormPoints,zeros(size(stormPoints,1),1)];
 
     dlmwrite(outputFname,stormPoints,'-append','Delimiter',' ');
 end

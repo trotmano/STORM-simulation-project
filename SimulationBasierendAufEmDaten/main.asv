@@ -1,45 +1,70 @@
 function main()
-    figHandle = findobj('Type','figure');
-    close(figHandle);
-	rng(5);
-    loa = 10; %length of both antibodies combined
+    
+    
+	%rng(5);
+    loa = 1; %length of both antibodies combined
     aoa = 90/180*pi; %angle of antibody
-    bspnm = 0.27; %binding sites per nm
-    pabs = 0.40; %part of available binding sites
+    %bspnm = 1.65; %binding sites per nm  %for microtubules with only alpha tubuli stained it should be like 13/8 1.65
+    bspnm = 1/2.75;
+    pabs = 0.51; %part of available binding sites
     abpf = 14;% average blinking per fluorophor
-    rof = 11;%radius of filament
+    rof = 3.5;%radius of filament
+    fpab = 1.5; %fluorophores per antibody
 
     cEM = [0,0,0]; %color of EM data
     cSTORM = [1,0,0]; %color of STORM result
     cAB = [0,1,0]; %color of Antibody
-    sxy = 8; %sigma of fitting error in xy direction
-    sz = 35; %sigma of fitting error in z direction
+    sxy = 1; %sigma of fitting error in xy direction
+    sz = 1; %sigma of fitting error in z direction
     
-    doc = 1; %degree of clustering, part of all localizations that are clustered
+    doc = 0; %degree of clustering, part of all localizations that are clustered
     nocpsmm = 1; %number of clusters per square micrometer
     docpsnm = 0.01; %denstiy of clusters in antibodies per square nm
+    bd = 50/10000/10000; %blinking density in number fluorophores per square nm
     
     bspsnm = .0159/2; %binding sites per square nanometer
-    fname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Organelle Library\Microtubules\Microtubules.wimp';
-    %fname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Organelle Library\Mitochondria\EM Tomography Model\Mitochondria-Tomogram-beta-islet-cells.nff';
+    %fname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Organelle Library beta-islet-cells\Microtubules\EM Tomography Data\Microtubules.wimp';
+    fname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Synaptic Actin Data- Experimental + Simulation\EM Models\Newest Model- 150209\150209-nff';
+    %fname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Organelle Library beta-islet-cells\Mitochondria\EM Tomography Model\mito.nff';
+    outputname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Synaptic Actin Data- Experimental + Simulation\STORM Simulation\output.nff';%'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Axonal Actin Ring Simulation\STORM simulation\actin.bla';fname;%outputname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Organelle Library beta-islet-cells\Mitochondria\EM Tomography Model\mito.nff';
     %objects = importTriangles(fname);
     %objects = getActinRings({});
     %objects = getCrossingLines({});
-    %objects = importEMData('141208-STORMmodel');
-    objects = importFilamentousStructures(fname);
+    objects = importEMData(fname);
+    %objects = importFilamentousStructures(fname);
+    %objects = objects{1};
     %objects = swapColumns(objects,2,3);
-    objects = rescaleObjects(objects,10);
-    if isSurfaceData(objects)
-        [ap,ep] = findAntibodiesTri(objects, bspsnm, pabs, loa, aoa, doc, nocpsmm, docpsnm);
-        idx = zeros(size(ep,1),1);
-    else
-        [ap,ep,idx]=findLines(objects, bspnm, pabs,aoa,loa,rof);
+    %objects = rescaleObjects(objects,2.3); %WICHTIG FÜR MITOCHONDRIEN
+    %dists = findDistLines(objects);
+    
+    %objects = importSelfMeassuredMicrotubuli();
+    %outputname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Organelle Library beta-islet-cells\Microtubules\EM Tomography Data\SelfMeassured.wimp';
+    listLoa = [1];%[9,10,11,12,13,14,15];
+    listRes = [[1;1],[4;8],[8;30]];
+    listPabs = [0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.15,0.2,0.25,0.5,1];
+    listAbpf = [1,2,5,10,14];
+    for a = 1:size(listLoa,2)
+        for b = 1:size(listRes,2)
+            for c = 1:size(listPabs,2)
+                for b = 1:size(listAbpf,2)
+                    sprintf('%d/%d, %d/%d, %d/%d',a,size(listLoa,2),b,size(listRes,2),c,size(listPabs,2))
+                    loa = listLoa(a);
+                    sxy = listRes(1,b);
+                    sz = listRes(2,b);
+                    pabs = listPabs(c);
+                    ab
+                    [ap,ep,stormPoints] = doSimulation(objects, bspsnm, pabs,loa,aoa,doc,nocpsmm,docpsnm,bspnm,rof,abpf,sxy,sz,bd,fpab);
+                    writeOutput(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
+                end
+            end
+        end
     end
-    [stormPoints, idxF ,idxSt] = findStormPoints(ep, abpf, sxy, sz,idx,false);
+    visualizeResults(objects,ap,ep,stormPoints)
+end
 
-    writeStormPointsForVisp(stormPoints,fname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm);
-    writeOutputFileMalk(stormPoints,fname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm);
-    writeStormPointsForAmira(stormPoints,fname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm);
+function visualizeResults(objects,ap,ep,stormPoints)
+    figHandle = findobj('Type','figure');
+    close(figHandle);
     showEM(objects)
     showAntibodies(ap,ep)
     showEMAntibodies(objects,ap,ep)
@@ -47,6 +72,23 @@ function main()
     showEMAntibodiesStormPoints(objects,ap,ep,stormPoints)
 
     setViewForFigures(150,30)
+
+end
+
+function writeOutput(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab)
+    writeStormPointsFRC(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
+    writeStormPointsForVisp(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
+    writeOutputFileMalk(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
+    writeStormPointsForAmira(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
+end
+
+function [ap,ep,stormPoints] = doSimulation(objects, bspsnm, pabs,loa,aoa,doc,nocpsmm,docpsnm,bspnm,rof,abpf,sxy,sz,bd,fpab)
+    if isSurfaceData(objects)
+        [ap,ep] = findAntibodiesTri(objects, bspsnm, pabs, loa, aoa, doc, nocpsmm, docpsnm);
+    else
+        [ap,ep,idx]=findLines(objects, bspnm, pabs,aoa,loa,rof);
+    end
+    [stormPoints, idxF ,idxSt] = findStormPoints(ep, abpf, sxy, sz, bd,fpab,true);
 end
 
 function showEMAntibodiesStormPoints(objects,ap,ep,stormPoints)
@@ -74,7 +116,7 @@ function showEMAntibodies(objects,ap,ep)
     clf
     hold on
     if isSurfaceData(objects)
-        printTriangles(objects,fig)
+        printTriangles(objects,fig,[0,0,0])
     else
         printEMLines(objects,fig,[0,0,0])
     end
@@ -102,7 +144,7 @@ end
 function issd = isSurfaceData(objects)
     issd = 1;
     for i = 1:size(objects,2)
-        if size(objects{i},1)>4
+        if (size(objects{i},1)>4 || size(objects{i},1)==2)
             issd = 0;
             break;
         end

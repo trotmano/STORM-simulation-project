@@ -1,6 +1,0 @@
-function writeStormPointsForVisp(stormPoints,fname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm)
-    stormPoints = [stormPoints,zeros(size(stormPoints,1),1)];
-    parts = strsplit(fname,'.');
-    params = ['loa-',loa,'aoa-',aoa,'bspnm-',bspnm,'pabs-',pabs,'abpf-',abpf,'rof-',rof,'sxy-',sxy,'sz-',sz,'bspsnm-',bspsnm];
-    dlmwrite([parts{1},params,'_VispOutput.txt'],stormPoints,' ')
-end
