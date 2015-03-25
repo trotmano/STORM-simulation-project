@@ -1,11 +1,11 @@
-function [basepoints,ep,idx] = findAntibodiesTri_3(triangles, bspsnm, pabs, loa, aoa, nocpsnm, docpsnm, areaClust, enableClust)
+function [basepoints,ep,idx] = findAntibodiesTri_3(triangles, bspsnm, pabs, loa, aoa, nocpsnm, doa, diameter, enableClust)
 
     triang = getMatrix(triangles);
 %     triang = triang(1:5000,:,:);
     triang = triang(:,1:3,:);
     areas = getAreas(triang);
     if enableClust == 1
-        [basepoints,idx,indicesNbrFluor,indicesPoints] = findBasePointsCluster(triang,areas,nocpsnm,docpsnm,areaClust);
+        [basepoints,idx,indicesNbrFluor,indicesPoints] = findBasePointsCluster(triang,areas,nocpsnm,doa,diameter);
         ep = getEndpointsClust(basepoints,triang,idx,indicesNbrFluor,indicesPoints,loa,aoa);
     else
         nbrFluorophores = floor(sum(real(areas))*bspsnm*pabs);
@@ -49,22 +49,23 @@ function ep = getEndpointsClust(basepoints,triang,idx,idxNbr,idxPoints,loa,aoa)
     end
 end
 
-function [points,indicesFluor,indicesNbrFluor,indicesPoints] = findBasePointsCluster(triang, areas, nocpsnm, docpsnm, areaClust)
+function [points,indicesFluor,indicesNbrFluor,indicesPoints] = findBasePointsCluster(triang, areas, nocpsnm, doa, diameter)
 
     [basepointCluster,indicesBaseClust,idMatrix] = findRandomTriangles(triang,areas,nocpsnm);
-    clustEnvironment = buildClustEnvironment(triang,indicesBaseClust,areaClust);
-    [neighMatrix,neighArea] = findNeighbouringTriangles(triang,indicesBaseClust,clustEnvironment,areaClust);
-    [points,indicesFluor,indicesNbrFluor,indicesPoints] = setAntibodies(triang,indicesBaseClust,neighMatrix,neighArea,areas,docpsnm);
+    clustEnvironment = buildClustEnvironment(triang,indicesBaseClust,diameter);
+    [neighMatrix,neighArea] = findNeighbouringTriangles(triang,indicesBaseClust,clustEnvironment);
+    [points,indicesFluor,indicesNbrFluor,indicesPoints] = setAntibodies(triang,indicesBaseClust,neighMatrix,neighArea,areas,doa);
 end
 
-function clustEnvironment = buildClustEnvironment(triang,indicesBaseClust,areaClust)
+function clustEnvironment = buildClustEnvironment(triang,indicesBaseClust,diameter)
     
     % Choose some random point within every triangle to
     % which the distance to base triangles of the clusters 
     % will be calculated
     pointInTriangles = squeeze(sum(triang(:,:,:),2))./3;
-    distance = sqrt(areaClust);
-    clustEnvironment = computeDistance(triang,indicesBaseClust,pointInTriangles,distance);
+%     distance = sqrt(areaClust/pi);
+    radius = diameter/2;
+    clustEnvironment = computeDistance(triang,indicesBaseClust,pointInTriangles,radius);
 end
 
 function envMatrix = computeDistance(triang,indicesBaseClust,pointInTriangles,distance)
@@ -88,7 +89,7 @@ function envMatrix = computeDistance(triang,indicesBaseClust,pointInTriangles,di
     end
 end
 
-function [neighMatrix,neighArea] = findNeighbouringTriangles(triang,idBase_clust,clustEnvironment,areaClust)
+function [neighMatrix,neighArea] = findNeighbouringTriangles(triang,idBase_clust,clustEnvironment)
 
     lenTriang = size(triang,1);
     lenBase = size(idBase_clust,2);
@@ -147,11 +148,11 @@ function [neighMatrix,neighArea] = findNeighbouringTriangles(triang,idBase_clust
         neighMatrix{idBase} = [identicalPoints; zeros(lenDiff,1)];
     end
     [neighMatrix,neighArea] = helper_RecursiveNeigh(triang,idBase_clust,clustEnvironment, ...
-                                                    neighMatrix,areaClust);
+                                                    neighMatrix);
 end
 
 function [neighMatrix,neighArea] = helper_RecursiveNeigh(triang,idBase_clust,clustEnvironment, ...
-                                                        neighMatrix,areaClust)
+                                                        neighMatrix)
     area = getAreas(triang);
     lenBase = size(idBase_clust,2);
     lenTriang = size(triang,1);
@@ -285,7 +286,7 @@ end
 %     end
 % end
 
-function [points,indices_Fluor,indices_nbrFluoph,indicesPoints] = setAntibodies(triang,indicesClust_base,neighMatrix,neighAllArea,areas,docpsnm)
+function [points,indices_Fluor,indices_nbrFluoph,indicesPoints] = setAntibodies(triang,indicesClust_base,neighMatrix,neighAllArea,areas,doa)
 
     lengthBase = length(indicesClust_base);
     indices_nbrFluoph = zeros(length(triang),1);
@@ -294,7 +295,7 @@ function [points,indices_Fluor,indices_nbrFluoph,indicesPoints] = setAntibodies(
         base = indicesClust_base(i);
         clusterArea = neighAllArea(base);
         neighborhood = nonzeros(neighMatrix{base,1});
-        cluster_nbrFluoroph = floor(clusterArea * docpsnm);
+        cluster_nbrFluoroph = floor(clusterArea * doa);
         cluster_nbrFluoroph
         lenNeigh = length(neighborhood);
         

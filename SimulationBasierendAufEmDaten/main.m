@@ -21,14 +21,15 @@ function main()
     
     enableClust = 1;
     noc = 0.0001; %number of clusters per square nm
-    areaClust = 4900; %average area of a cluster
-    doa = 0.005; %denstiy of antibodies in clusters per square nm
+%     areaClust = 3900; %average area of a cluster
+    diaClust = 70; %average diameter of a cluster
+    doa = 0.05; %denstiy of antibodies in clusters per square nm
     
     %fname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Organelle Library\Microtubules\Microtubules.wimp';
     %fname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/Mitochondria-Tomogram-beta-islet-cells';
     fname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/Mitochondria-Tomogram-beta-islet-cells.nff';
     %outputname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Organelle Library\Mitochondria\STORM Simulation\Mitochondria-Tomogram-beta-islet-cells.nff';
-    outputname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/Output/Mito-Tomo_clust1_noc0.0001_areaC4900_doa0.005.nff';
+    outputname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/Output/Mito-Tomo_clust1_noc0.0001_diaClust70_doa0.05.nff';
     
     objects = importTriangles(fname);
     %objects = getActinRings({});
@@ -39,15 +40,15 @@ function main()
     %objects = rescaleObjects(objects,10);
     
     if isSurfaceData(objects)
-        [ap,ep,idxClust] = findAntibodiesTri_3(objects, bspsnm, pabs, loa, aoa, noc, doa, areaClust, enableClust);
+        [ap,ep,idxClust] = findAntibodiesTri_3(objects, bspsnm, pabs, loa, aoa, noc, doa, diaClust, enableClust);
     else
         [ap,ep,idx]=findLines(objects, bspnm, pabs, aoa, loa, rof);
     end
     [stormPoints, idxF ,idxSt] = findStormPoints(ep, abpf, sxy, sz, false);
 
-    writeStormPointsForVisp(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm);
-    writeOutputFileMalk(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm);
-    writeStormPointsForAmira(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm);
+%     writeStormPointsForVisp(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm);
+%     writeOutputFileMalk(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm);
+%     writeStormPointsForAmira(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm);
     
     showEM(objects,cEM)
     showAntibodies(ap,ep,cAB)
