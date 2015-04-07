@@ -94,9 +94,9 @@ function [neighMatrix,neighArea] = findNeighbouringTriangles(triang,idBase_clust
     lenTriang = size(triang,1);
     lenBase = size(idBase_clust,2);
     neighMatrix = cell(lenTriang,1);
-    triang_p1 = squeeze(triang(:,1,:));
-    triang_p2 = squeeze(triang(:,2,:));
-    triang_p3 = squeeze(triang(:,3,:));
+    triangP1 = squeeze(triang(:,1,:));
+    triangP2 = squeeze(triang(:,2,:));
+    triangP3 = squeeze(triang(:,3,:));
 
     for p = 1 : lenBase
         % The coordinates of each base triangles will be compared to
@@ -109,9 +109,9 @@ function [neighMatrix,neighArea] = findNeighbouringTriangles(triang,idBase_clust
         coordEnv_base = zeros(3*lenEnv_base,3);
         for i = 1 : lenEnv_base
             currentPoint = idEnv_base(i);
-            coordEnv_base(i,:) = squeeze(triang_p1(currentPoint,:,:));
-            coordEnv_base(i + lenEnv_base,:) = squeeze(triang_p2(currentPoint,:,:));
-            coordEnv_base(i + 2*lenEnv_base,:) = squeeze(triang_p3(currentPoint,:,:));
+            coordEnv_base(i,:) = squeeze(triangP1(currentPoint,:,:));
+            coordEnv_base(i + lenEnv_base,:) = squeeze(triangP2(currentPoint,:,:));
+            coordEnv_base(i + 2*lenEnv_base,:) = squeeze(triangP3(currentPoint,:,:));
         end
         identPoints_logical = ismember(coordEnv_base,coordBase,'rows');
         [row, ~ ] = find(identPoints_logical);
@@ -148,11 +148,11 @@ function [neighMatrix,neighArea] = findNeighbouringTriangles(triang,idBase_clust
         neighMatrix{idBase} = [identicalPoints; zeros(lenDiff,1)];
     end
     [neighMatrix,neighArea] = helper_RecursiveNeigh(triang,idBase_clust,clustEnvironment, ...
-                                                    neighMatrix);
+                                                    neighMatrix,triangP1,triangP2,triangP3);
 end
 
 function [neighMatrix,neighArea] = helper_RecursiveNeigh(triang,idBase_clust,clustEnvironment, ...
-                                                        neighMatrix)
+                                                        neighMatrix,triP1,triP2,triP3)
     area = getAreas(triang);
     lenBase = size(idBase_clust,2);
     lenTriang = size(triang,1);
@@ -175,7 +175,8 @@ function [neighMatrix,neighArea] = helper_RecursiveNeigh(triang,idBase_clust,clu
             next_neighborhood = zeros(1,lenTriang);
             
             currentBase = i;
-            second_neighMatrix = helper_neighborhood(triang,current_neighborhood,clustEnvironment,currentBase);
+            second_neighMatrix = helper_neighborhood2(triang,current_neighborhood,clustEnvironment, ...
+                                                        currentBase,triP1,triP2,triP3);
             begin = 1;
             for j = 1 : lenCurrentNeigh
                 next_neighbors = nonzeros(second_neighMatrix{current_neighborhood(j),1})';          
@@ -205,14 +206,12 @@ function [neighMatrix,neighArea] = helper_RecursiveNeigh(triang,idBase_clust,clu
     end
 end
 
-function neighMatrix = helper_neighborhood(triang,idBase_clust,clustEnvironment,currentBase)
+function neighMatrix = helper_neighborhood(triang,idBase_clust,clustEnvironment,currentBase, ...
+                                             triP1,triP2,triP3)
 
     lenTriang = size(triang,1);
     lenBase = size(idBase_clust,2);
     neighMatrix = cell(lenTriang,1);
-    triang_p1 = squeeze(triang(:,1,:));
-    triang_p2 = squeeze(triang(:,2,:));
-    triang_p3 = squeeze(triang(:,3,:));
     idEnv_base = clustEnvironment{currentBase};
 
     for p = 1 : lenBase
@@ -225,10 +224,70 @@ function neighMatrix = helper_neighborhood(triang,idBase_clust,clustEnvironment,
         coordEnv_base = zeros(3*lenEnv_base,3);
         for i = 1 : lenEnv_base
             currentPoint = idEnv_base(i);
-            coordEnv_base(i,:) = squeeze(triang_p1(currentPoint,:,:));
-            coordEnv_base(i + lenEnv_base,:) = squeeze(triang_p2(currentPoint,:,:));
-            coordEnv_base(i + 2*lenEnv_base,:) = squeeze(triang_p3(currentPoint,:,:));
+            coordEnv_base(i,:) = squeeze(triP1(currentPoint,:,:));
+            coordEnv_base(i + lenEnv_base,:) = squeeze(triP2(currentPoint,:,:));
+            coordEnv_base(i + 2*lenEnv_base,:) = squeeze(triP3(currentPoint,:,:));
         end
+        identPoints_logical = ismember(coordEnv_base,coordBase,'rows');
+        [row, ~ ] = find(identPoints_logical);
+        if size(row,1) == 0
+            size(row,1)
+            continue
+        end
+        row = mod(row,lenEnv_base);
+        identicalPoints_1 = unique(row);
+        if identicalPoints_1(1,1) == 0
+            identicalPoints_1(1,1) = lenEnv_base;
+        end
+        
+        lenIdentPoints = size(identicalPoints_1,1);
+        identicalPoints = zeros(lenIdentPoints,1);
+        for i = 1 : lenIdentPoints
+            % Indices in environment to current base triangle will be
+            % rewritten to actual indices of triangles
+            current_idNeighbor = idEnv_base(identicalPoints_1(i));
+            identicalPoints(i,1) = current_idNeighbor;
+        end
+        % delete base Triangle itself from neighborhood list
+        [ ~ , deleteBase] = ismember(idBase,identicalPoints);
+        if deleteBase ~= 0
+            identicalPoints(deleteBase) = 0;
+        else
+            'Warning, base not included in env.'
+        end
+        
+        identicalPoints = nonzeros(identicalPoints);
+        % write neighborhood list in a cell (neighMatrix), which is accesible
+        % by the indice of the base triangle of a cluster
+        lenDiff = lenTriang - length(identicalPoints);
+        neighMatrix{idBase} = [identicalPoints; zeros(lenDiff,1)];
+    end
+end
+
+function neighMatrix = helper_neighborhood2(triang,idBase_clust,clustEnvironment,currentBase, ...
+                                                triP1,triP2,triP3)
+
+    lenTriang = size(triang,1);
+    lenBase = size(idBase_clust,2);
+    neighMatrix = cell(lenTriang,1);
+    % Generate list containing coordinates for all
+    % elements in cluster environment
+    idEnv_base = clustEnvironment{currentBase};
+    lenEnv_base = size(idEnv_base,1);
+    coordEnv_base = zeros(3*lenEnv_base,3);
+    for i = 1 : lenEnv_base
+        currentPoint = idEnv_base(i);
+        coordEnv_base(i,:) = squeeze(triP1(currentPoint,:,:));
+        coordEnv_base(i + lenEnv_base,:) = squeeze(triP2(currentPoint,:,:));
+        coordEnv_base(i + 2*lenEnv_base,:) = squeeze(triP3(currentPoint,:,:));
+    end
+
+    for p = 1 : lenBase
+        % The coordinates of each base triangles will be compared to
+        % the circumjacent triangles (clustEnvironment) which fulfill
+        % the euclidean distance condition
+        idBase = idBase_clust(p);
+        coordBase = squeeze(triang(idBase,:,:));
         identPoints_logical = ismember(coordEnv_base,coordBase,'rows');
         [row, ~ ] = find(identPoints_logical);
         if size(row,1) == 0
