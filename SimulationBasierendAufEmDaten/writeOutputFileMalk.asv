@@ -1,5 +1,0 @@
-function writeOutputFileMalk(stormPoints,fname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm)
-    stormPoints = [stormPoints(:,1:3),zeros(size(stormPoints,1),1),stormPoints(:,4)];
-    parts = strsplit(fname,'.'); 
-    dlmwrite([parts{1},'_MalkOutput.txt'],stormPoints,' ')
-end

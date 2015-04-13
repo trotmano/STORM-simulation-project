@@ -4,51 +4,64 @@ function main()
     close(figHandle);
 % 	rng(5);
     rng('shuffle');
+    
     loa = 10; %length of both antibodies combined
     aoa = 90/180*pi; %angle of antibody
-    bspnm = 0.27; %binding sites per nm
-    pabs = 0.40; %part of available binding sites
+    bspnm = 1.65; %binding sites per square nanometer -- for microtubules with only alpha tubuli stained it should be like 13/8 = 1.65
+    %bspnm = 1/2.75;
+    %bspsnm = .0159/2;
+    pabs = 0.51; %part of available binding sites
     abpf = 14;% average blinking per fluorophor
-    rof = 11;%radius of filament
+    rof = 3.5;%radius of filament
+    fpab = 1.5; %fluorophores per antibody
 
     cEM = [0,0,0]; %color of EM data
     cSTORM = [1,0,0]; %color of STORM result
     cAB = [0,1,0]; %color of Antibody
+    
     sxy = 8; %sigma of fitting error in xy direction
     sz = 35; %sigma of fitting error in z direction
-
-    bspsnm = .0159/2; %binding sites per square nanometer
     
     enableClust = 1;
     noc = 0.0001; %number of clusters per square nm
-%     areaClust = 3900; %average area of a cluster
+    %areaClust = 3900; %average area of a cluster
     diaClust = 70; %average diameter of a cluster
     doa = 0.05; %denstiy of antibodies in clusters per square nm
+        
+    bd = 50/10000/10000; %blinking density in number fluorophores per square nm
+    bspsnm = 10/600.;%.0159/2; %binding sites per square nanometer
     
     %fname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Organelle Library\Microtubules\Microtubules.wimp';
     %fname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/Mitochondria-Tomogram-beta-islet-cells.nff';
-    fname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/Mitochondria-Tomogram-beta-islet-cells.nff';
+    fname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/Mitochondria-Tomogram-beta-islet-cells-scaled10000.nff';
     %outputname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Organelle Library\Mitochondria\STORM Simulation\Mitochondria-Tomogram-beta-islet-cells.nff';
     outputname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/Output/Mito-Tomo_clust1_noc0.0001_diaClust70_doa0.05.nff';
+    
+    %fname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Synaptic Actin Data- Experimental + Simulation\EM Models\Newest Model- 150209\150209-nff';
+    %outputname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Actin in Infected Erythrocytes\ExtractedSurface-Different Outputs\output.txt';
     
     objects = importTriangles(fname);
     %objects = getActinRings({});
     %objects = getCrossingLines({});
-    %objects = importEMData('141208-STORMmodel');
+    %objects = importEMData(fname);
+    %objects = importPly(fname);
     %objects = importFilamentousStructures(fname);
-    %objects = swapColumns(objects,2,3);
-    %objects = rescaleObjects(objects,10);
-    
-    if isSurfaceData(objects)
-        [ap,ep,idxClust] = findAntibodiesTri_3(objects, bspsnm, pabs, loa, aoa, noc, doa, diaClust, enableClust);
-    else
-        [ap,ep,idx]=findLines(objects, bspnm, pabs, aoa, loa, rof);
+    %objects = objects{1};
+    %objects = swapColumns(objects,2,3);    
+    %objects = rescaleObjects(objects,2.3); %important for mitochondria
+    %objects = importSelfMeassuredMicrotubuli();
+   
+    [ap,ep,stormPoints,idxClust] = doSimulation(objects,bspsnm,pabs,loa,aoa,noc,doa,bspnm,rof,abpf,sxy,sz,bd,fpab,diaClust,enableClust);
+    if (size(stormPoints,1)>0)
+        writeOutput(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
     end
-    [stormPoints, idxF ,idxSt] = findStormPoints(ep, abpf, sxy, sz, false);
+    visualizeResults(objects,ap,ep,stormPoints,idxClust,cEM,cAB)
+% profile viewer
+end
 
-%     writeStormPointsForVisp(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm);
-%     writeOutputFileMalk(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm);
-%     writeStormPointsForAmira(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm);
+function visualizeResults(objects,ap,ep,stormPoints,idxClust,cEM,cAB)
+    figHandle = findobj('Type','figure');
+    close(figHandle);
     
     showEM(objects,cEM)
     showAntibodies(ap,ep,cAB)
@@ -57,7 +70,6 @@ function main()
     showStormPoints(stormPoints)
     showEMAntibodiesStormPoints(objects,ap,ep,stormPoints,cEM,cAB)
     setViewForFigures(150,30)
-% profile viewer
 end
 
 function showClusterTriangles(objects,idxClust,col)
@@ -81,6 +93,22 @@ function showClusterTriangles(objects,idxClust,col)
     else
         printEMLines(objectsClust,fig,col)
     end
+end
+
+function writeOutput(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab)
+    %writeStormPointsFRC(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
+    writeStormPointsForVisp(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
+    writeOutputFileMalk(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
+    writeStormPointsForAmira(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
+end
+
+function [ap,ep,stormPoints,idxClust] = doSimulation(objects,bspsnm,pabs,loa,aoa,noc,doa,bspnm,rof,abpf,sxy,sz,bd,fpab,diaClust,enableClust)
+    if isSurfaceData(objects)
+        [ap,ep,idxClust] = findAntibodiesTri_3(objects, bspsnm, pabs, loa, aoa, noc, doa, diaClust, enableClust);
+    else
+        [ap,ep,~]=findLines(objects, bspnm, pabs, aoa, loa, rof);
+    end
+    [stormPoints, ~ , ~] = findStormPoints(ep, abpf, sxy, sz, bd, fpab, true);
 end
 
 function showEMAntibodiesStormPoints(objects,ap,ep,stormPoints,col1,col2)
@@ -136,7 +164,7 @@ end
 function issd = isSurfaceData(objects)
     issd = 1;
     for i = 1:size(objects,2)
-        if size(objects{i},1)>4
+        if (size(objects{i},1)>4 || size(objects{i},1)==2)
             issd = 0;
             break;
         end
