@@ -144,8 +144,15 @@ function [neighMatrix,neighArea] = findNeighbouringTriangles(triang,idBase_clust
         identicalPoints = nonzeros(identicalPoints);
         % write neighborhood list in a cell (neighMatrix), which is accesible
         % by the indice of the base triangle of a cluster
-        lenDiff = lenTriang - length(identicalPoints);
-        neighMatrix{idBase} = [identicalPoints; zeros(lenDiff,1)];
+        
+        %         lenDiff = lenTriang - length(identicalPoints);
+        lenClustEnv = length(idEnv_base);
+        extIdPoints = zeros(lenClustEnv,1);
+        for i = 1 : length(identicalPoints)
+            extIdPoints(i) = identicalPoints(i);
+        end
+        neighMatrix{idBase} = extIdPoints;
+        %         neighMatrix{idBase} = [identicalPoints; zeros(lenDiff,1)];
     end
     [neighMatrix,neighArea] = helper_RecursiveNeigh(triang,idBase_clust,clustEnvironment, ...
                                                     neighMatrix,triangP1,triangP2,triangP3);
@@ -156,7 +163,6 @@ function [neighMatrix,neighArea] = helper_RecursiveNeigh(triang,idBase_clust,clu
     area = getAreas(triang);
     lenBase = size(idBase_clust,2);
     lenTriang = size(triang,1);
-    lenMatrix = size(neighMatrix{idBase_clust(1),1},1);
     neighArea = zeros(lenTriang,1);
     for i = 1 : lenBase
         i
@@ -192,9 +198,16 @@ function [neighMatrix,neighArea] = helper_RecursiveNeigh(triang,idBase_clust,clu
                 break
             end
             
-            lenDiff = lenMatrix - length(diff_nextNeigh);
-            newDiff_nextNeigh = [diff_nextNeigh ; zeros(lenDiff,1)];
-            neighMatrix{idBase_clust(i),1}(:,newRow) = newDiff_nextNeigh;
+            %             lenDiff = lenMatrix - length(diff_nextNeigh);
+            %             newDiff_nextNeigh = [diff_nextNeigh ; zeros(lenDiff,1)];
+            %             neighMatrix{idBase_clust(i),1}(:,newRow) = newDiff_nextNeigh;
+            
+            lenClustEnv = size(neighMatrix{idBase_clust(i),1},1);
+            ext_diffNextNeigh = zeros(lenClustEnv,1);
+            for j = 1 : length(diff_nextNeigh)
+                ext_diffNextNeigh(j) = diff_nextNeigh(j);
+            end
+            neighMatrix{idBase_clust(i),1}(:,newRow) = ext_diffNextNeigh;
             newRow = newRow + 1;
             
             for j = 1 : length(diff_nextNeigh)
@@ -259,6 +272,7 @@ function neighMatrix = helper_neighborhood(triang,idBase_clust,clustEnvironment,
         identicalPoints = nonzeros(identicalPoints);
         % write neighborhood list in a cell (neighMatrix), which is accesible
         % by the indice of the base triangle of a cluster
+        
         lenDiff = lenTriang - length(identicalPoints);
         neighMatrix{idBase} = [identicalPoints; zeros(lenDiff,1)];
     end
@@ -319,8 +333,15 @@ function neighMatrix = helper_neighborhood2(triang,idBase_clust,clustEnvironment
         identicalPoints = nonzeros(identicalPoints);
         % write neighborhood list in a cell (neighMatrix), which is accesible
         % by the indice of the base triangle of a cluster
-        lenDiff = lenTriang - length(identicalPoints);
-        neighMatrix{idBase} = [identicalPoints; zeros(lenDiff,1)];
+        
+        %         lenDiff = lenTriang - length(identicalPoints);
+        lenClustEnv = length(idEnv_base);
+        extIdPoints = zeros(lenClustEnv,1);
+        for i = 1 : length(identicalPoints)
+            extIdPoints(i) = identicalPoints(i);
+        end
+        neighMatrix{idBase} = extIdPoints;
+        %         neighMatrix{idBase} = [identicalPoints; zeros(lenDiff,1)];                                                                                                                                                                                                                                                                                                                                     
     end
 end
 
@@ -428,9 +449,8 @@ function [points,indices_Fluor,indices_nbrFluoph,indicesPoints] = setAntibodies(
 end
 
 function [points,idIndices,idMatrix] = findRandomTriangles(triang,areas,nocpsnm)
-
 %     rng('shuffle');
-    totalArea = sum(real(areas));
+    totalArea = sum(real(areas))
     numClusters = floor(nocpsnm * totalArea);   %number of clusters;
     len = length(triang(:,1,1));
     while numClusters == 0
@@ -467,7 +487,6 @@ function [points,idIndices,idMatrix] = findRandomTriangles(triang,areas,nocpsnm)
 end
 
 function idx = getRandomTriangles(areas, nbrFluorophores)
-
     tot = sum(areas);
     idx = [];
     startingindices = [];
@@ -503,7 +522,6 @@ function idx = getRandomTriangles(areas, nbrFluorophores)
 end
 
 function [points,idx] = findBasePoints(nbrFluorophores,triang,areas)
-    
     v1 = squeeze(triang(:,2,:) - triang(:,1,:));
     v2 = squeeze(triang(:,3,:) - triang(:,1,:));
     start = tic;
@@ -529,7 +547,6 @@ function [points,idx] = findBasePoints(nbrFluorophores,triang,areas)
 end
 
 function areas = getAreas(triang)
-
     v1 = triang(:,2,:) - triang(:,1,:);
     v2 = triang(:,3,:) - triang(:,1,:);
     v2norm = normr(squeeze(v2));

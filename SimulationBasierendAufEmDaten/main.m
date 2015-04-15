@@ -1,5 +1,5 @@
 function main()
-% profile on
+profile on
     figHandle = findobj('Type','figure');
     close(figHandle);
 % 	rng(5);
@@ -32,10 +32,12 @@ function main()
     bspsnm = 10/600.;%.0159/2; %binding sites per square nanometer
     
     %fname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Organelle Library\Microtubules\Microtubules.wimp';
-    %fname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/Mitochondria-Tomogram-beta-islet-cells.nff';
+%     fname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/Mitochondria-Tomogram-beta-islet-cells.nff';
     fname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/Mitochondria-Tomogram-beta-islet-cells-scaled10000.nff';
+%     fname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/mitoBig.nff';
+
     %outputname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Organelle Library\Mitochondria\STORM Simulation\Mitochondria-Tomogram-beta-islet-cells.nff';
-    outputname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/Output/Mito-Tomo_clust1_noc0.0001_diaClust70_doa0.05.nff';
+    outputname = '/media/Dev_d/Persönlicher Ordner/Docs/Skripte/Master/Studium/S_01/Kuner/EM Tomography Model/Output/mitoscaled1_noc0.0001_diaClust70_doa0.05.nff';
     
     %fname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Synaptic Actin Data- Experimental + Simulation\EM Models\Newest Model- 150209\150209-nff';
     %outputname = 'Y:\Users_shared\Superresolution Simulation Software Project- Frank and Varun\Actin in Infected Erythrocytes\ExtractedSurface-Different Outputs\output.txt';
@@ -56,7 +58,23 @@ function main()
         writeOutput(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
     end
     visualizeResults(objects,ap,ep,stormPoints,idxClust,cEM,cAB)
-% profile viewer
+profile viewer
+end
+
+function writeOutput(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab)
+    writeStormPointsForVisp(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
+    writeOutputFileMalk(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
+    writeStormPointsForAmira(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
+end
+
+function [ap,ep,stormPoints,idxClust] = doSimulation(objects,bspsnm,pabs,loa,aoa,noc,doa,bspnm,rof,abpf,sxy,sz,bd,fpab,diaClust,enableClust)
+    if isSurfaceData(objects)
+        [ap,ep,idxClust] = findAntibodiesTri_3(objects, bspsnm, pabs, loa, aoa, noc, doa, diaClust, enableClust);
+    else
+        [ap,ep,~]=findLines(objects, bspnm, pabs, aoa, loa, rof);
+    end
+    %stormPoints = zeros(5);
+    [stormPoints, ~ , ~] = findStormPoints(ep, abpf, sxy, sz, bd, fpab, true);
 end
 
 function visualizeResults(objects,ap,ep,stormPoints,idxClust,cEM,cAB)
@@ -67,13 +85,12 @@ function visualizeResults(objects,ap,ep,stormPoints,idxClust,cEM,cAB)
     showAntibodies(ap,ep,cAB)
     showEMAntibodies(objects,ap,ep,cEM,cAB)
     showClusterTriangles(objects,idxClust,cEM)
-    showStormPoints(stormPoints)
-    showEMAntibodiesStormPoints(objects,ap,ep,stormPoints,cEM,cAB)
+%     showStormPoints(stormPoints)
+%     showEMAntibodiesStormPoints(objects,ap,ep,stormPoints,cEM,cAB)
     setViewForFigures(150,30)
 end
 
 function showClusterTriangles(objects,idxClust,col)
-
     triang = getMatrix(objects);
     triang = triang(:,1:3,:);
     sizeClust = size(idxClust,1);
@@ -93,22 +110,6 @@ function showClusterTriangles(objects,idxClust,col)
     else
         printEMLines(objectsClust,fig,col)
     end
-end
-
-function writeOutput(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab)
-    %writeStormPointsFRC(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
-    writeStormPointsForVisp(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
-    writeOutputFileMalk(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
-    writeStormPointsForAmira(stormPoints,outputname,loa,aoa,bspnm,pabs,abpf,rof,sxy,sz,bspsnm,fpab);
-end
-
-function [ap,ep,stormPoints,idxClust] = doSimulation(objects,bspsnm,pabs,loa,aoa,noc,doa,bspnm,rof,abpf,sxy,sz,bd,fpab,diaClust,enableClust)
-    if isSurfaceData(objects)
-        [ap,ep,idxClust] = findAntibodiesTri_3(objects, bspsnm, pabs, loa, aoa, noc, doa, diaClust, enableClust);
-    else
-        [ap,ep,~]=findLines(objects, bspnm, pabs, aoa, loa, rof);
-    end
-    [stormPoints, ~ , ~] = findStormPoints(ep, abpf, sxy, sz, bd, fpab, true);
 end
 
 function showEMAntibodiesStormPoints(objects,ap,ep,stormPoints,col1,col2)
@@ -173,10 +174,14 @@ end
 
 function idx = findNextFigure()
     figureHandles = findobj('Type','figure');
-    if size(figureHandles) == 0
+    if size(figureHandles,1) == 0
         idx = 1;
     else
-        figNames=[figureHandles.Number];
-        idx = max(figNames)+1;
+        try
+            idx = max(figureHandles)+1;
+        catch
+            figNames=[figureHandles.Number];
+            idx = max(figNames)+1;
+        end
     end
 end
